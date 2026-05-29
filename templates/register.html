@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrar Visitante</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; color: #333; }
+        .container { max-width: 600px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h1 { color: #0056b3; }
+        form label { display: block; margin-bottom: 5px; font-weight: bold; }
+        form input[type="text"] { width: 100%; padding: 8px; margin-bottom: 10px; border-radius: 4px; border: 1px solid #ddd; box-sizing: border-box; }
+        form button { width: 100%; padding: 10px; background-color: #0056b3; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        .back-link { display: inline-block; margin-top: 15px; text-decoration: none; }
+        .camera-section { margin-top: 15px; text-align: center; border: 1px dashed #ccc; padding: 15px; border-radius: 5px; }
+        video, canvas { max-width: 100%; height: auto; border-radius: 5px; }
+        canvas { display: none; }
+        .camera-section button { width: auto; padding: 8px 12px; margin: 5px; font-size: 0.9em; }
+        #autocomplete-status { font-size: 0.8em; margin-left: 10px; visibility: hidden; }
+        .alert-box { padding: 15px; margin-bottom: 20px; border: 2px solid; border-radius: 5px; text-align: center; }
+        #visitor-alert-box { display: none; border-color: #dc3545; background-color: #f8d7da; color: #721c24; }
+        #form-error-box { border-color: #ffc107; background-color: #fff3cd; color: #856404; }
+        .alert-box h3 { margin-top: 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Registrar Visitante</h1>
+        
+        {% if error %}
+            <div id="form-error-box" class="alert-box">
+                <p>{{ error }}</p>
+            </div>
+        {% endif %}
+
+        <div id="visitor-alert-box" class="alert-box">
+            <h3>¡ATENCIÓN! VISITANTE CON ANTECEDENTES</h3>
+            <p><strong>Motivo:</strong> <span id="alert-reason"></span></p>
+            <p><small>Alerta registrada por <strong id="alert-by"></strong> el <span id="alert-date"></span></small></p>
+        </div>
+
+        <form method="post" id="register-form">
+            <label for="id_number">Número de Identificación (Obligatorio):</label>
+            <div style="display: flex; align-items: center;">
+                <input type="text" id="id_number" name="id_number" value="{{ visitor.get('id_number', '') }}" 
+                       pattern="^[a-zA-Z0-9-]{3,}$" title="Mínimo 3 caracteres. Solo se permiten números, letras y guiones." required autofocus>
+                <span id="autocomplete-status"></span>
+            </div>
+
+            <label for="name">Nombre Completo:</label>
+            <input type="text" id="name" name="name" value="{{ visitor.get('name', '') }}" required>
+
+            <label for="purpose">Propósito de la Visita:</label>
+            <input type="text" id="purpose" name="purpose" value="{{ visitor.get('purpose', '') }}" required>
+            
+            <div class="camera-section">
+                <h3>Foto del Visitante (Opcional)</h3>
+                <button type="button" id="startCameraButton">Iniciar Cámara</button>
+                <video id="video" autoplay style="display:none;"></video>
+                <canvas id="canvas"></canvas>
+                <button type="button" id="takePictureButton" style="display:none;">Tomar Foto</button>
+                <button type="button" id="retakePictureButton" style="display:none;">Volver a Tomar</button>
+            </div>
+            
+            <input type="hidden" name="photo_data_url" id="photoDataUrlInput">
+            <button type="submit" style="margin-top: 20px;">Registrar Entrada</button>
+        </form>
+        <a href="{{ url_for('index') }}" class="back-link">← Volver al Inicio</a>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const idInput = document.getElementById('id_number');
+            const nameInput = document.getElementById('name');
+            const purposeInput = document.getElementById('purpose');
+            const statusSpan = document.getElementById('autocomplete-status');
+            const alertBox = document.getElementById('visitor-alert-box');
+            const alertReason = document.getElementById('alert-reason');
+            const alertBy = document.getElementById('alert-by');
+            const alertDate = document.getElementById('alert-date');
+
+            idInput.addEventListener('blur', async function() {
+                const idNumber = this.value.trim();
+                alertBox.style.display = 'none';
+                if (!idNumber) {
+                    statusSpan.style.visibility = 'hidden';
+                    return;
+                }
+                
+                try {
+                    const response = await fetch(`/api/visitor/${idNumber}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        nameInput.value = data.name || '';
+                        purposeInput.value = data.purpose || '';
+                        statusSpan.textContent = '✓ Datos cargados';
+                        statusSpan.style.color = 'green';
+                        statusSpan.style.visibility = 'visible';
+
+                        if (data.flag_reason) {
+                            alertReason.textContent = data.flag_reason;
+                            alertBy.textContent = data.flagged_by;
+                            alertDate.textContent = new Date(data.timestamp).toLocaleString();
+                            alertBox.style.display = 'block';
+                        }
+                    } else {
+                        nameInput.value = '';
+                        purposeInput.value = '';
+                        statusSpan.textContent = 'Nuevo visitante';
+                        statusSpan.style.color = '#0056b3';
+                        statusSpan.style.visibility = 'visible';
+                    }
+                } catch (error) { console.error('Error al buscar visitante:', error); }
+            });
+
+            // Código de la cámara
+            const startCameraButton = document.getElementById('startCameraButton');
+            const video = document.getElementById('video');
+            const takePictureButton = document.getElementById('takePictureButton');
+            const retakePictureButton = document.getElementById('retakePictureButton');
+            const canvas = document.getElementById('canvas');
+            const photoDataUrlInput = document.getElementById('photoDataUrlInput');
+            let stream;
+
+            startCameraButton.addEventListener('click', async () => {
+                if (stream) { stream.getTracks().forEach(track => track.stop()); }
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                    video.srcObject = stream;
+                    video.style.display = 'block';
+                    startCameraButton.style.display = 'none';
+                    takePictureButton.style.display = 'inline-block';
+                    retakePictureButton.style.display = 'none';
+                } catch (err) { alert('No se pudo acceder a la cámara.'); }
+            });
+
+            takePictureButton.addEventListener('click', () => {
+                if (stream) {
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+                    stream.getTracks().forEach(track => track.stop());
+                    video.style.display = 'none';
+                    photoDataUrlInput.value = canvas.toDataURL('image/png');
+                    takePictureButton.style.display = 'none';
+                    retakePictureButton.style.display = 'inline-block';
+                }
+            });
+
+            retakePictureButton.addEventListener('click', () => { startCameraButton.click(); });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restaurar/Revisar Backup</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #0056b3;
+        }
+        .user-info {
+            text-align: right;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+        }
+        .user-info a {
+            color: #dc3545;
+            text-decoration: none;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .user-info a:hover {
+            text-decoration: underline;
+        }
+        .flash-messages {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 20px 0;
+        }
+        .flash-messages li {
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .flash-messages .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .flash-messages .danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .flash-messages .warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+        .flash-messages .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        ul.backup-list {
+            list-style: none;
+            padding: 0;
+        }
+        ul.backup-list li {
+            background: #e9ecef;
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        ul.backup-list li span {
+            flex-grow: 1;
+        }
+        ul.backup-list li a {
+            background-color: #007bff;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 3px;
+            text-decoration: none;
+            font-size: 0.9em;
+        }
+        ul.backup-list li a:hover {
+            background-color: #0056b3;
+        }
+        .no-backups {
+            text-align: center;
+            color: #666;
+            margin-top: 20px;
+        }
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            background-color: #6c757d;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            text-decoration: none;
+        }
+        .back-link:hover {
+            background-color: #5a6268;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="user-info">
+            {% if g.user %}
+                Bienvenido, {{ g.user.username }} ({{ g.user.role }}) | <a href="{{ url_for('logout') }}">Cerrar Sesión</a>
+            {% endif %}
+        </div>
+        <h1>Restaurar/Revisar Backup</h1>
+
+        <ul class="flash-messages">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <li class="{{ category }}">{{ message }}</li>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </ul>
+
+        {% if backups %}
+            <p>Selecciona un archivo de backup para revisar sus datos:</p>
+            <ul class="backup-list">
+                {% for backup in backups %}
+                    <li>
+                        <span>{{ backup.filename }} (última modificación: {{ backup.modified_time }})</span>
+                        <a href="{{ url_for('view_backup_data', filename=backup.filename) }}">Ver Datos</a>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="no-backups">No se encontraron archivos de backup.</p>
+        {% endif %}
+
+        <a href="{{ url_for('index') }}" class="back-link">Volver al Inicio</a>
+    </div>
+</body>
+</html>

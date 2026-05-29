@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestionar Alerta de Visitante</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; color: #333; }
+        .container { max-width: 600px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h1 { color: #dc3545; }
+        .visitor-info { background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+        .visitor-info strong { display: block; margin-bottom: 5px; }
+        label { display: block; margin-top: 15px; font-weight: bold; }
+        textarea { width: 100%; padding: 8px; min-height: 100px; border-radius: 4px; border: 1px solid #ddd; box-sizing: border-box; font-size: 1em; }
+        .actions { display: flex; justify-content: space-between; margin-top: 20px; }
+        button { padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold; }
+        .save-button { background-color: #007bff; color: white; }
+        .save-button:hover { background-color: #0056b3; }
+        .remove-button { background-color: #dc3545; color: white; }
+        .remove-button:hover { background-color: #c82333; }
+        .back-link { display: inline-block; margin-top: 20px; color: #0056b3; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Gestionar Alerta de Visitante</h1>
+        
+        <div class="visitor-info">
+            <strong>Visitante:</strong> {{ visitor.name }}<br>
+            <strong>Identificación:</strong> {{ visitor.id_number }}
+        </div>
+
+        <form method="post">
+            <label for="reason">Motivo de la Alerta (sea claro y conciso):</label>
+            <textarea id="reason" name="reason" required>{{ alert.reason if alert else '' }}</textarea>
+
+            <div class="actions">
+                <button type="submit" name="action" value="save" class="save-button">Guardar Alerta</button>
+                
+                {% if alert and (current_user.role == 'supervisor' or current_user.role == 'administrador') %}
+                    <button type="submit" name="action" value="remove" class="remove-button" onclick="return confirm('¿Estás seguro de que quieres quitar esta alerta? Esta acción es permanente.');">Quitar Alerta</button>
+                {% endif %}
+            </div>
+        </form>
+
+        <a href="{{ url_for('view_all_visitors') }}" class="back-link">← Volver al Historial de Visitantes</a>
+    </div>
+</body>
+</html>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Limpiar Base de Datos</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #0056b3;
+        }
+        .user-info {
+            text-align: right;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+        }
+        .user-info a {
+            color: #dc3545;
+            text-decoration: none;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .user-info a:hover {
+            text-decoration: underline;
+        }
+        .flash-messages {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 20px;
+        }
+        .flash-messages li {
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        .flash-messages .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .flash-messages .danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .flash-messages .warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+        .flash-messages .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        form label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        form input[type="password"] {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button[type="submit"] {
+            background-color: #dc3545; /* Red for deletion */
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1em;
+        }
+        button[type="submit"]:hover {
+            background-color: #c82333;
+        }
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: #007bff;
+            text-decoration: none;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="user-info">
+            {% if current_user %}
+                Bienvenido, {{ current_user.username }} ({{ current_user.role }}) | <a href="{{ url_for('logout') }}">Cerrar Sesión</a>
+            {% endif %}
+        </div>
+        <h1>Limpiar Base de Datos de Visitantes</h1>
+
+        <ul class="flash-messages">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <li class="{{ category }}">{{ message }}</li>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </ul>
+
+        <p>Esta función eliminará **TODOS** los registros de visitantes de la base de datos `visitors`. **¡ADVERTENCIA! Esta acción es irreversible y no se puede deshacer.**</p>
+        <p>Para confirmar, por favor ingresa tu contraseña de administrador:</p>
+
+        <form method="post" onsubmit="return confirm('¿Estás ABSOLUTAMENTE seguro de que quieres eliminar TODOS los registros de visitantes? Esta acción no se puede deshacer.');">
+            <label for="admin_password">Contraseña de Administrador:</label>
+            <input type="password" id="admin_password" name="admin_password" required>
+            <button type="submit">Limpiar Base de Datos Ahora</button>
+        </form>
+
+        <a href="{{ url_for('index') }}" class="back-link">Volver al Inicio</a>
+    </div>
+</body>
+</html>

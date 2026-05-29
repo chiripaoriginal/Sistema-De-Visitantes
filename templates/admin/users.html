@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administrar Usuarios</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .container {
+            max-width: 900px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #0056b3;
+        }
+        .user-info {
+            text-align: right;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+        }
+        .user-info a {
+            color: #dc3545;
+            text-decoration: none;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .user-info a:hover {
+            text-decoration: underline;
+        }
+        .action-buttons {
+            margin-bottom: 20px;
+        }
+        .action-buttons a {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 0.9em;
+        }
+        .action-buttons a:hover {
+            background-color: #0056b3;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table th, table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+            vertical-align: middle;
+        }
+        table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        .edit-button, .delete-button {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 0.8em;
+            margin-right: 5px;
+        }
+        .edit-button {
+            background-color: #ffc107;
+            color: #333;
+        }
+        .edit-button:hover {
+            background-color: #e0a800;
+        }
+        .delete-button {
+            background-color: #dc3545;
+            color: white;
+        }
+        .delete-button:hover {
+            background-color: #c82333;
+        }
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: #007bff;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        .flash-messages {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 20px;
+        }
+        .flash-messages li {
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        .flash-messages .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .flash-messages .danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .flash-messages .warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+        .flash-messages .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .user-photo-table { /* Nuevo estilo para la foto en la tabla de usuarios */
+            width: 40px; 
+            height: 40px;
+            object-fit: cover;
+            border-radius: 50%; /* Para que sea redonda */
+        }
+        .user-photo { /* Para la foto de perfil del usuario logeado en el user-info */
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 4px;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="user-info">
+            {% if current_user %}
+                Bienvenido, {{ current_user.username }} ({{ current_user.role }}) 
+                {% if current_user.photo_path %}
+                    <img src="{{ url_for('static', filename=current_user.photo_path) }}" alt="Foto de Perfil" class="user-photo" style="vertical-align: middle; margin-left: 10px;">
+                {% endif %}
+                | <a href="{{ url_for('logout') }}">Cerrar Sesión</a>
+            {% endif %}
+        </div>
+        <h1>Administrar Usuarios</h1>
+
+        <ul class="flash-messages">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <li class="{{ category }}">{{ message }}</li>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </ul>
+
+        <div class="action-buttons">
+            <a href="{{ url_for('create_user') }}">Crear Nuevo Usuario</a>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Foto</th> {# Nueva columna #}
+                    <th>Usuario</th>
+                    <th>Rol</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>
+                        {% if user.photo_path %}
+                            <img src="{{ url_for('static', filename=user.photo_path) }}" alt="Foto" class="user-photo-table">
+                        {% else %}
+                            <img src="{{ url_for('static', filename='uploads/users/default_user_photo.png') }}" alt="Sin Foto" class="user-photo-table">
+                        {% endif %}
+                    </td>
+                    <td>{{ user.username }}</td>
+                    <td>{{ user.role }}</td>
+                    <td>
+                        <a href="{{ url_for('edit_user', user_id=user.id) }}" class="edit-button">Editar</a>
+                        <form action="{{ url_for('delete_user', user_id=user.id) }}" method="post" style="display:inline;" onsubmit="return confirm('¿Estás seguro de que quieres eliminar a este usuario?');">
+                            <button type="submit" class="delete-button">Eliminar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <a href="{{ url_for('index') }}" class="back-link">Volver al Inicio</a>
+    </div>
+</body>
+</html>
